@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE configuration
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+	<typeAliases>
+		<typeAlias type="com.springboard.vo.BoardVO" alias="BoardVO" /> <!-- 현 시간부로 com.springboard.vo.BoardVO 이거를 BoardVO 이렇게 줄여쓰겠다. 이런 기능이다. -->
+	</typeAliases>
+	
+	<environments default="development"> <!-- 연결관련 작업 mybatis 전체의 동작을 설정하는곳-->
+		<environment id="development">
+			<transactionManager type="JDBC" /> <!-- myBatis는 Jdbc를 가려 놓은거라 결국 Jdbc에 포함되는 기술이다. -->
+			<dataSource type="POOLED"> <!-- 커넥션풀을 쓰겠다 이 말이야 -->
+				<property name="driver" value="oracle.jdbc.OracleDriver" />
+				<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe" />
+				<property name="username" value="springboard" />
+				<property name="password" value="9922" /> <!-- 여기까지 내용이 기본설정. -->
+			</dataSource>
+		</environment>	
+		<environment id="unittest"> <!-- 이런식으로 몇 개 더 만들어서 설정을 다르게한 다음 입맛따라 쓸 수 있다. db를 변경해야할 경우등등 -->
+			<transactionManager type="JDBC" /> <!-- myBatis는 Jdbc를 가려 놓은거라 결국 Jdbc에 포함되는 기술이다. -->
+			<dataSource type="POOLED"> <!-- 커넥션풀을 쓰겠다 이 말이야 -->
+				<property name="driver" value="oracle.jdbc.OracleDriver" />
+				<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe" />
+				<property name="username" value="springboard" />
+				<property name="password" value="9922" />
+			</dataSource>
+		</environment>		
+	</environments>
+	
+	<!-- SQL + Object Mapping Configuration (sql과 객체를 매핑) -->
+	<mappers>
+		<mapper resource="com/springboard/mapper/board-mapper.xml" /> 
+	</mappers>
+	
+</configuration>

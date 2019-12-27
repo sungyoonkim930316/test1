@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+		   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		   
+<!-- package.name.ClassName -->		   
+<mapper namespace="com.springboard.mapper.BoardMapper"> <!-- com.springboard.mapper 이걸 일종의 패키지 이름이라고 생각하면 된다. BoardMapper 이건 클래스 이름이라고 생각하면 된다. -->
+
+	<!-- resultType이랑 parameterType에 쓰는 com.springboard.vo.BoardVO 이거는 mybatis-config.xml에서 typeAliases를 이용해서 줄일 수 있다. -->
+
+	<select id="selectBoard" resultType="BoardVO"> <!-- Jdbc에서 rs.set으로 하나하나 넣던거를 이거 하나로 갈무리했다. --> <!-- 결과를 조회하고 여기에 저장을 한다. -->
+		SELECT bno, title, writer, regdate, updatedate, deleted, readcount 
+		FROM tbl_board 
+	</select>
+	
+	<!-- 자동 증가 컬럼 처리 방법 그 첫 번째. -->
+	<!-- 
+	<insert id="insertBoard" parameterType="com.springboard.vo.BoardVO" useGeneratedKeys="true" keyColumn="bno" keyProperty="bno"> 객체를 sql에 mapping하고 있다. key어쩌구 하는거는 자동 증가 컬럼 처리하는 방법 keyColumn bno를 keyProperty에 집어 넣어라.
+		INSERT INTO tbl_board (bno, title, writer, content)
+		VALUES (seq_board.nextval, #{title}, #{writer}, #{content})
+	</insert>
+ 	-->
+ 	
+ 	<!-- 자동 증가 컬럼 처리 방법 그 두 번째. -->
+ 	<insert id="insertBoard" parameterType="BoardVO"> <!-- 객체를 sql에 mapping하고 있다. -->
+ 		<selectKey keyProperty="bno" resultType="int" order="AFTER"> <!-- 정수값을 keyProperty에 넣어주세요. -->
+ 			SELECT seq_board.currval FROM DUAL
+ 		</selectKey>
+		INSERT INTO tbl_board (bno, title, writer, content)
+		VALUES (seq_board.nextval, #{title}, #{writer}, #{content})
+	</insert>
+	
+</mapper>		   

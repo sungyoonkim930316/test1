@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						https://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:env.properties" />
+	</bean>
+	
+	<bean id="apacheDataSource"
+		  class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName" value="${datasource.driver}" />
+		<property name="url" value="${datasource.url}" />
+		<property name="username" value="${datasource.username}" />
+		<property name="password" value="${datasource.password}" />
+		<property name="minIdle" value="${datasource.minidle}" />
+		<property name="maxTotal" value="${datasource.maxpool}" />
+		<property name="maxWaitMillis" value="${datasource.conntimeout}" />
+	</bean>
+	
+	<bean id="hikariDataSource"
+		  class="com.zaxxer.hikari.HikariDataSource">
+		<property name="driverClassName" value="${datasource.driver}" />
+		<property name="jdbcUrl" value="${datasource.url}" />
+		<property name="username" value="${datasource.username}" />
+		<property name="password" value="${datasource.password}" />
+		<property name="minimumIdle" value="${datasource.minidle}" />
+		<property name="maximumPoolSize" value="${datasource.maxpool}" />
+		<property name="connectionTimeout" value="${datasource.conntimeout}" />	  
+	</bean>
+	
+	<!-- xml이용 -->
+	<bean id="boardService"
+		  class="com.springboard.service.BoardServiceImpl">
+		<!-- <property name="boardDao" ref="boardDao" /> --> <!-- boardDao는 안쓰고 cpBoardDao를 쓰려고 이짓함. -->
+		<!-- <property name="boardDao" ref="cpBoardDao" /> -->
+		<!-- <property name="boardDao" ref="templateBoardDao" /> -->
+		<!-- <property name="boardDao" ref="mybatisBoardDao" /> -->
+		<property name="boardDao" ref="mapperBoardDao" />
+		
+		<property name="boardMapper" ref="boardMapper" /> <!-- Mapper를 서비스에 넣고 서비스가 이것을 실행하게끔. -->
+	</bean>
+	
+	<!-- annotation이용 -->
+	<bean id="boardDao"
+		  class="com.springboard.repository.RawJdbcBoardDao">
+	</bean>
+	
+	<bean id="cpBoardDao"
+		  class="com.springboard.repository.RawJdbcWithConnectionPoolBoardDao">
+		<!-- <property name="dataSource" ref="apacheDataSource" /> -->
+		<property name="dataSource" ref="hikariDataSource" />
+	</bean>
+	
+	<bean id="templateBoardDao"
+		  class="com.springboard.repository.JdbcTemplateBoardDao">
+		<property name="jdbcTemplate" ref="jdbcTemplate" />
+	</bean>
+	
+	<bean id="jdbcTemplate"
+		  class="org.springframework.jdbc.core.JdbcTemplate">	
+		<property name="dataSource" ref="hikariDataSource" />  
+	</bean>
+	
+	<bean id="mybatisBoardDao"
+		  class="com.springboard.repository.MyBatisBoardDao">
+		<property name="sessionTemplate" ref="sessionTemplate" /> <!-- 의존성 주입 --><!-- 79라인에 있는 sessionTemplate를 참조 하고 있다. -->
+	</bean>
+	
+	<!-- bean for mybatis & mybatis-spring --> <!-- FactoryBean이 builder랑 factory 생성하는 과정을 생략했다.-->
+	<!-- SqlSessionFactoryBean.getObject()를 호출해서 SqlSessionFactory 생성. 이유는 스프링Bean 객체생성의 기본로직과 상이해서. 그게 ~~FactoryBean클래스의 기능 -->
+	<bean id="sqlSessionFactory"
+		  class="org.mybatis.spring.SqlSessionFactoryBean"> <!-- 여기에 명시된 타입과 실제 만들어진 객체의 타입이 다르다. 클래스 이름이 SqlSessionFactoryBean이라 SqlSessionFactoryBean 객체가 만들어져야 하는데 정작 만들어진건 SqlSessionFactory다. 결국 ~~FactoryBean은 자기를 만들겠다는게 아니라 이 클래스를 이용하여 다른 특별한 객체(통상적인 방법으로 안만들어지는 객체)를 만들겠다는 뜻이다. -->
+		<property name="dataSource" ref="apacheDataSource" />
+		<property name="configLocation"
+			 	  value="classpath:mybatis-config.xml" />	  <!-- classpath에서 mybatis-config.xml 이거를 가지고 오세요. "이 설정으로 작업하세요!" -->
+	</bean>
+	
+	<bean id="sessionTemplate" 
+		  class="org.mybatis.spring.SqlSessionTemplate"> <!-- 얘가 DB랑 연동을 할거다. 그래서 만드는거구. 얘 안에 SqlSession이 들어있다. -->
+		<constructor-arg ref="sqlSessionFactory" /> <!-- SqlSessionTemplate를 만들기 위해 이게 있다. 왜냐하면 SqlSessionFactory를 생성자로 받아야 만들어지니까. -->
+	</bean>
+	
+	<bean id="mapperBoardDao"
+		  class="com.springboard.repository.MyBatisMapperBoardDao">
+		<property name="boardMapper" ref="boardMapper" /> <!-- 의존성 주입 --><!-- 79라인에 있는 sessionTemplate를 참조 하고 있다. -->
+	</bean>
+	
+	<!-- BoardMapper 인터페이스를 구현한 (FactoryBean으로 자동으로 생성된 - 무슨클래스인지 알 수는 없다. 그래서 FactoryBean으로 만들어지는것.) 클래스 객체 생성 -->
+	<bean id="boardMapper"
+		  class="org.mybatis.spring.mapper.MapperFactoryBean"> <!-- 이거랑 연동할 인터페이스를 구현한 클래스의 객체를 등록하고 있다.  -->
+		<property name="mapperInterface" value="com.springboard.mapper.BoardMapper" />	  
+		<property name="sqlSessionTemplate" ref="sessionTemplate" />
+	</bean> <!-- 결국 이걸 만드는건 dao에서 문자열로 처리하면 애로사항이 많아서 코드로 처리하기 위함이다. MyBatisMapperBoardDao 참조 -->
+		
+</beans>
